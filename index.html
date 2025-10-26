@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title></title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</style>
+</head>
+<body>
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+        <img src="https://cdn.cookielaw.org/logos/9a3365cc-3965-4e9f-b352-94c317b6fafe/1fadf2c5-d63a-45c3-b947-c823ecbed0c6/09da9c3d-b5e7-4472-ad10-fcc50494632e/gategroup_Logo_White_RGB_PNG(4).png"/>
+    <h1 class="h4 mb-0">SmartOps</h1>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary btn-sm" id="btnSeed">Reset demo</button>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#leader" type="button" role="tab">Task managment (Leader)</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#worker" type="button" role="tab">Task managment (Worker)</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#operator" type="button" role="tab">Quality Assurance Mode</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#trolley_set" type="button" role="tab">Trolley Set</button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+
+    <div class="tab-pane fade show active" id="leader" role="tabpanel">
+      <div class="row g-4">
+
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body row g-3 align-items-center">
+              <div class="col-md-4">
+                <label class="form-label mb-1"><strong>α</strong> weight: Priority vs Load</label>
+                <input type="range" class="form-range" id="alpha" min="0" max="1" step="0.05" value="0.6">
+                <div class="small text-muted">0 = balance by load - 1 = pure priority</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label mb-1">Maximum repeated tasks</label>
+                <input type="number" id="varWindow" class="form-control" value="3" min="1" max="10">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label mb-1">Maximum concurrent tasks per crew</label>
+                <input type="number" id="maxTasks" class="form-control" value="3" min="1" max="8">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card h-100">
+            <div class="card-header bg-white">
+              <h5 class="mb-0">Teams & Crew</h5>
+              <small class="text-muted">Current load & recent variety</small>
+            </div>
+            <div class="card-body" id="empList"></div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <div>
+                <h5 class="mb-0">Task backlog</h5>
+                <small class="text-muted">Priority, effort & category</small>
+              </div>
+              <div>
+                <button class="btn btn-sm btn-outline-secondary me-2" id="btnAddTask" data-bs-toggle="modal" data-bs-target="#addTaskModal">+ Task</button>
+                <button class="btn btn-sm btn-outline-danger" id="btnClearDone">Clear done</button>
+              </div>
+            </div>
+            <div class="list-group list-group-flush" id="taskList"></div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card h-100 suggested mb-4">
+            <div class="card-header bg-white">
+              <h5 class="mb-0">System suggestion</h5>
+              <small class="text-muted">Best (task → crew) for variety and load</small>
+            </div>
+            <div class="card-body">
+              <div id="suggBox" class="mb-3 text-muted">Click “Suggest next”.</div>
+              <div class="d-grid gap-2">
+                <button class="btn btn-primary" id="btnSuggest">Suggest next</button>
+                <button class="btn btn-success" id="btnAssign">Assign suggestion</button>
+                <button class="btn btn-outline-primary" id="btnAuto">Auto-assign (demo)</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card h-100">
+            <div class="card-header bg-white">
+              <h5 class="mb-0">Reported issues</h5>
+              <small class="text-muted">Crew needing support</small>
+            </div>
+            <div class="list-group list-group-flush" id="issuesList">
+              <div class="list-group-item text-muted">No issues yet.</div>
+            </div>
+          </div>
+
+          <div class="card h-100 mt-4">
+            <div class="card-header bg-white">
+              <h5 class="mb-0">Operator Mode Incidents</h5>
+              <small class="text-muted">Reports from operator view</small>
+            </div>
+            <div class="list-group list-group-flush" id="operatorIncidentList">
+              <div class="list-group-item text-muted">No incidents registered.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="row g-4 mt-0">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header bg-white">
+              <h5 class="mb-0">Completed Task Logs</h5>
+              <small class="text-muted">Real-time tracking from Operator Mode</small>
+            </div>
+            <div class="card-body p-0">
+              <div class="list-group list-group-flush" id="operatorCompletionList">
+                <div class="list-group-item text-muted">No carts registered yet.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="worker" role="tabpanel">
+      <div class="row g-4">
+
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body row g-3 align-items-center">
+              <div class="col-md-5">
+                <label class="form-label mb-1">I am</label>
+                <select id="workerSelect" class="form-select"></select>
+              </div>
+              <div class="col-md-7">
+                <div class="d-flex gap-3 align-items-center">
+                  <div class="badge text-bg-success badge-large" id="pointsBadge">0 pts</div>
+                  <div id="badgesBox" class="d-flex flex-wrap gap-2"></div>
+                </div>
+                <div class="small text-muted mt-2" id="varietyHint">Variety: 0 categories this week.</div>
+                <div class="mt-2">
+                  <span class="fw-semibold">Featured achievements:</span>
+                  <span id="achievementsBox" class="ms-2 text-muted">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-7">
+          <div class="card h-100">
+            <div class="card-header bg-white">
+              <h5 class="mb-0">My assigned tasks</h5>
+              <small class="text-muted">Mark done or report an issue</small>
+            </div>
+            <div class="p-3" id="myTasks"></div>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="card h-100">
+            <div class="card-header bg-white">
+              <h5 class="mb-0">Achievements</h5>
+              <small class="text-muted">Streak, diversity & badges</small>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <div class="fw-semibold">Productivity streak</div>
+                <div class="progress" role="progressbar" aria-label="Streak">
+                  <div class="progress-bar" id="streakBar" style="width:0%">0/5</div>
+                </div>
+                <div class="small text-muted mt-1">Complete ≥3 tasks/day to progress the 5-day streak.</div>
+              </div>
+              <div>
+                <div class="fw-semibold">Task diversity</div>
+                <div id="diversityCats" class="d-flex flex-wrap gap-2 mt-1"></div>
+                <div class="small text-muted">Earn <em>“All-Rounder”</em> by completing 3+ distinct categories in a day.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="operator" role="tabpanel">
+      <div class="row g-3">
+
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body d-flex flex-column flex-lg-row gap-3 align-items-start justify-content-between">
+              <div>
+                <div class="text-uppercase small fw-semibold text-primary">CrewHub - Operator Mode</div>
+                <h2 class="h4 mb-2">Smart Execution (Pick &amp; Pack)</h2>
+                <div class="d-flex flex-wrap gap-2">
+                  <span class="badge text-bg-light text-primary" id="operatorStatusBadge">No active cart</span>
+                  <span class="badge text-bg-success" id="operatorStartTimeBadge" hidden>Start --</span>
+                </div>
+              </div>
+              <div class="d-flex flex-column flex-sm-row flex-lg-column align-items-stretch gap-2 w-100 w-lg-auto">
+                <button class="btn btn-primary" id="scanCartBtn">Scan Cart QR</button>
+                <button class="btn btn-outline-secondary" id="resetOperatorDataBtn">Reset data</button>
+              </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 pt-0">
+              <dl class="row small mb-0" id="cartMeta">
+                <dt class="col-5 col-md-3">Cart</dt><dd class="col-7 col-md-3 text-muted">--</dd>
+                <dt class="col-5 col-md-3">Flight</dt><dd class="col-7 col-md-3 text-muted">--</dd>
+                <dt class="col-5 col-md-3">Operator</dt><dd class="col-7 col-md-3 text-muted">--</dd>
+                <dt class="col-5 col-md-3">Products</dt><dd class="col-7 col-md-3 text-muted">--</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-7">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Operational Checklist</h5>
+              <small class="text-muted">Scan and check the products following the suggested sequence.</small>
+            </div>
+            <div class="card-body">
+              <div class="d-flex flex-wrap align-items-center gap-4 mb-3">
+                <div>
+                  <div class="small text-muted text-uppercase">Time elapsed</div>
+                  <div class="fw-semibold fs-5" id="operatorTimer">00:00</div>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="small text-muted text-uppercase mb-1">Progress</div>
+                  <div class="progress">
+                    <div class="progress-bar" id="operatorProgressBar" style="width:0%">0%</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="small text-muted text-uppercase">Completed</div>
+                  <div class="fw-semibold" id="operatorCompletedCounter">0/0</div>
+                </div>
+              </div>
+              <div id="productChecklist" class="vstack gap-3">
+                <div class="alert alert-info small mb-0" role="alert">Scan a cart to begin.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-3" id="operatorSummaryCard" hidden>
+            <div class="card-header">
+              <h5 class="mb-0">Closing Summary</h5>
+              <small class="text-muted">Total time, efficiency, and next steps.</small>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-6">
+                  <div class="small text-muted text-uppercase">Total time</div>
+                  <div class="fw-semibold" id="summaryTotalTime">--</div>
+                </div>
+                <div class="col-6">
+                  <div class="small text-muted text-uppercase">Errors</div>
+                  <div class="fw-semibold text-danger" id="summaryErrors">0</div>
+                </div>
+                <div class="col-6">
+                  <div class="small text-muted text-uppercase">Tasks</div>
+                  <div class="fw-semibold" id="summaryTasks">0/0</div>
+                </div>
+                <div class="col-6">
+                  <div class="small text-muted text-uppercase">Efficiency</div>
+                  <div class="fw-semibold text-success" id="summaryEfficiency">0%</div>
+                </div>
+              </div>
+              <div class="mt-3">
+                <button class="btn btn-success me-2" id="newCartBtn">New cart</button>
+                <button class="btn btn-outline-primary" id="viewJournalBtn">View journal</button>
+              </div>
+            </div>
+          </div>
+
+  
+
+        </div>
+
+        <div class="col-12 col-lg-5">
+          <div class="card h-100">
+            <div class="card-header">
+              <h5 class="mb-0">Alerts & Journal</h5>
+            </div>
+            <div class="card-body">
+              <div id="operatorAlert" class="alert alert-secondary" role="alert">No activity. Scan a cart to start.</div>
+              <ul class="list-group list-group-flush small mt-3" id="operatorJournal">
+                <li class="list-group-item text-muted">The journal will be updated in real-time.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card mt-3" id="bottleModuleCard" hidden>
+            <div class="card-header">
+              <h5 class="mb-0">Bottle Control</h5>
+              <small class="text-muted">Automatic validation of seals and levels.</small>
+            </div>
+            <div class="card-body">
+              <div class="row g-3" id="bottleList"></div>
+              <div class="mt-3 small">
+                <div class="text-muted text-uppercase">Summary</div>
+                <div id="bottleSummary">Scan a cart with bottles to unlock analysis.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-3">
+            <div class="card-header">
+              <h5 class="mb-0">Saved Data</h5>
+              <small class="text-muted">Averages and last records.</small>
+            </div>
+            <div class="card-body">
+              <div class="small text-muted">Last cart</div>
+              <div class="fw-semibold mb-2" id="storageLastCart">--</div>
+              <div class="small text-muted">Average time per task</div>
+              <div class="fw-semibold mb-2" id="storageAvgTask">--</div>
+              <div class="small text-muted">Historical errors</div>
+              <div class="fw-semibold" id="storageErrors">--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-warning operator-floating-btn" id="reportIssueBtn">Report issue</button>
+    </div>
+
+     <div class="tab-pane fade" id="trolley_set" role="tabpanel">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body d-flex flex-column flex-lg-row gap-3 align-items-start justify-content-between">
+              <div>
+                <div class="text-uppercase small fw-semibold text-primary">Trolley Set</div>
+                <h2 class="h4 mb-2">QR Scan Simulator</h2>
+                <div class="d-flex flex-wrap gap-2">
+                  <span class="badge text-bg-light text-primary" id="trolleyStatusBadge">No active cart</span>
+                  <span class="badge text-bg-success" id="trolleyStartBadge" hidden>Start --</span>
+                </div>
+              </div>
+              <div class="d-flex flex-column flex-sm-row flex-lg-column align-items-stretch gap-2 w-100 w-lg-auto">
+                <button class="btn btn-primary" id="trolleyScanBtn">Scan Cart QR</button>
+                <button class="btn btn-outline-secondary" id="trolleyResetBtn">Reset data</button>
+              </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 pt-0">
+              <dl class="row small mb-0" id="trolleyCartMeta">
+                <dt class="col-5 col-md-3">Cart</dt><dd class="col-7 col-md-3 text-muted">--</dd>
+                <dt class="col-5 col-md-3">Flight</dt><dd class="col-7 col-md-3 text-muted">--</dd>
+                <dt class="col-5 col-md-3">Operator</dt><dd class="col-7 col-md-3 text-muted">--</dd>
+                <dt class="col-5 col-md-3">Products</dt><dd class="col-7 col-md-3 text-muted">--</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+                <div class="card mt-3" id="entryWeightCard" hidden>
+            <div class="card-header">
+              <h5 class="mb-0">Bottle needs complement</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <small class="text-muted" id="entryWeightRequirement">Find a bottle with a minimum of 300 grams</small>
+              </div>
+              <button class="btn btn-primary" id="submitWeightBtn" onclick="setTrolleyFlowStep(4)">Accept</button>
+            </div>
+          </div>
+
+          <div class="card mt-3" id="discardBottleCard" hidden>
+            <div class="card-header">
+              <h5 class="mb-0">Discard Bottle (Airline Policy)</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <small class="text-muted">This bottle does not meet the airline's reuse policy. Please discard it according to protocol.</small>
+              </div>
+              <button class="btn btn-primary" id="submitDiscardBtn" onclick="setTrolleyFlowStep(4)">Accept</button>
+            </div>
+          </div>
+
+        <div class="col-12" id="trolleyQRStepCard" hidden>
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">QR Scanner</h5>
+              <small class="text-muted">Point the camera at the cart's code or enter it manually.</small>
+            </div>
+            <div class="card-body">
+              <div class="vstack gap-3">
+                <div id="qrReader" style="width:100%; max-width:520px; aspect-ratio:3/2; background:#000; border-radius:.75rem; overflow:hidden"></div>
+                <div class="d-flex gap-2 align-items-center">
+                  <input type="text" id="manualQRInput" class="form-control" placeholder="Cart ID/QR (e.g., QR-CRT-01)">
+                  <button class="btn btn-primary" id="manualQRBtn">Load</button>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-secondary" id="qrStartBtn">Start camera</button>
+                  <button class="btn btn-outline-danger" id="qrStopBtn">Stop camera</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-12">
+          <div class="card" id="trolleyChecklistCard">
+            <div class="card-header">
+              <h5 class="mb-0">Operational Checklist</h5>
+              <small class="text-muted">Scan and check following the suggested sequence.</small>
+            </div>
+            <div class="card-body">
+              <div class="d-flex flex-wrap align-items-center gap-4 mb-3">
+                <div>
+                  <div class="small text-muted text-uppercase">Time elapsed</div>
+                  <div class="fw-semibold fs-5" id="trolleyTimer">00:00</div>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="small text-muted text-uppercase mb-1">Progress</div>
+                  <div class="progress">
+                    <div class="progress-bar" id="trolleyProgressBar" style="width:0%">0%</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="small text-muted text-uppercase">Completed</div>
+                  <div class="fw-semibold" id="trolleyCompletedCounter">0/0</div>
+                </div>
+              </div>
+              <div id="trolleyCurrentBox" class="vstack gap-3">
+                <div class="alert alert-info" role="alert">Scan a cart to begin.</div>
+              </div>
+              <div class="mt-3 d-grid" id="goBottleCalcWrap" hidden>
+                <button class="btn btn-primary" id="goBottleCalcBtn">Analyze bottles</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-3" id="trolleySummaryCard" hidden>
+            <div class="card-header">
+              <h5 class="mb-0">Closing Summary</h5>
+              <small class="text-muted">Total time, efficiency, and next steps.</small>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-6">
+                  <div class="small text-muted text-uppercase">Total time</div>
+                  <div class="fw-semibold" id="trolleySummaryTotalTime">--</div>
+                </div>
+                <div class="col-6">
+                  <div class="small text-muted text-uppercase">Errors</div>
+                  <div class="fw-semibold text-danger" id="trolleySummaryErrors">0</div>
+                </div>
+                <div class="col-6">
+                  <div class="small text-muted text-uppercase">Tasks</div>
+                  <div class="fw-semibold" id="trolleySummaryTasks">0/0</div>
+                </div>
+                <div class="col-6">
+                  <div class="small text-muted text-uppercase">Efficiency</div>
+                  <div class="fw-semibold text-success" id="trolleySummaryEfficiency">0%</div>
+                </div>
+              </div>
+              <div class="mt-3">
+                <button class="btn btn-success me-2" id="trolleyNewScanBtn">New cart</button>
+                <button class="btn btn-outline-primary" id="trolleyViewJournalBtn">View journal</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+
+
+<div class="modal fade" id="addTaskModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" id="addTaskForm">
+      <div class="modal-header">
+        <h5 class="modal-title">New task</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Title</label>
+          <input type="text" class="form-control" id="fTitle" required placeholder="e.g., Trolley LX721">
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Required role</label>
+            <select id="fRole" class="form-select" required>
+              <option>Operator</option>
+              <option>Support</option>
+              <option>Leader</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Priority (1–5)</label>
+            <input type="number" id="fPriority" class="form-control" min="1" max="5" value="3" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Effort (1–3)</label>
+            <input type="number" id="fEffort" class="form-control" min="1" max="3" value="1" required>
+          </div>
+        </div>
+        <div class="mt-3">
+          <label class="form-label">Category</label>
+          <select id="fCategory" class="form-select" required>
+            <option>Beverages</option>
+            <option>Service</option>
+            <option>Food</option>
+            <option>QC</option>
+          </select>
+        </div>
+        <div class="mt-3">
+          <label class="form-label">Notes (optional)</label>
+          <textarea id="fNotes" class="form-control" rows="2" placeholder="Additional details..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+        <button class="btn btn-primary" type="submit">Add</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="assignModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <form class="modal-content" id="assignForm">
+      <div class="modal-header">
+        <h5 class="modal-title">Assign task</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="assignTaskId">
+        <div class="mb-2">
+          <div class="fw-semibold" id="assignTaskTitle">--</div>
+          <div class="small text-muted" id="assignTaskMeta">Required role - Priority - Effort - Category</div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Team</label>
+            <select id="assignTeam" class="form-select"></select>
+            <div class="form-text">Pick a team to filter eligible crew.</div>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label d-flex justify-content-between align-items-center">
+              <span>Select crew (checklist)</span>
+              <span class="small text-muted" id="assignHint">0 selected</span>
+            </label>
+            <div class="input-group mb-2">
+              <span class="input-group-text">Search</span>
+              <input type="text" id="assignSearch" class="form-control" placeholder="Type a name...">
+              <button class="btn btn-outline-secondary" type="button" id="assignSelectAll">Select all</button>
+            </div>
+            <div id="assignChecklist" class="assign-checklist"></div>
+            <div class="form-text">Only crew with the required role for this task are shown.</div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+        <button class="btn btn-success" type="submit">Assign</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="issueModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" id="issueForm">
+      <div class="modal-header">
+        <h5 class="modal-title">Report an issue</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="issueTaskId">
+        <div class="mb-3">
+          <label class="form-label">Describe the problem</label>
+          <textarea id="issueText" class="form-control" rows="3" required placeholder="e.g., Missing supply / equipment block / spec doubt"></textarea>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Severity</label>
+            <select id="issueSeverity" class="form-select">
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Needs leader support?</label>
+            <select id="issueNeedHelp" class="form-select">
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-3 small text-muted">This will notify the leader's issues panel.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+        <button class="btn btn-danger" type="submit">Send</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="operatorIncidentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" id="operatorIncidentForm">
+      <div class="modal-header">
+        <h5 class="modal-title">Report issue</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">What happened?</label>
+          <textarea id="operatorIncidentText" class="form-control" rows="3" required placeholder="Briefly describe the incident..."></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Incident type</label>
+          <select id="operatorIncidentType" class="form-select">
+            <option value="abastecimiento">Supply</option>
+            <option value="equipo">Equipment</option>
+            <option value="calidad">Quality</option>
+            <option value="operativo">Operational</option>
+          </select>
+        </div>
+        <div class="small text-muted">The incident will be logged in the journal with the exact date and time.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+        <button class="btn btn-warning" type="submit">Register Incident</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
+  <div id="toast" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMsg">Notification</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+<script src="js/script.js">
+</script>
+</body>
+</html>
